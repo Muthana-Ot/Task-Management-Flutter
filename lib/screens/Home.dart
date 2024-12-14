@@ -14,22 +14,28 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
 final List<Task> tasks = [
     Task(
-      title: 'Prepare Project Proposal',
+      title: 'Prepare Chess Club',
       description:
-          'Draft and submit the initial proposal for the upcoming project to the client.',
+          'Get boards, organize the training room',
       status: 'Ongoing',
     ),
     Task(
-      title: 'Finalize UI/UX Design',
+      title: 'Social Media Posters',
       description:
-          'Incorporate feedback from the design review meeting and finalize the UI/UX.',
+          'Workshops Posters for 14/12/2024',
       status: 'Completed',
     ),
     Task(
-      title: 'Develop Authentication Module',
+      title: 'Submit Flutter Project 1',
       description:
-          'Implement login, registration, and password recovery features.',
+          'Complete the code and publish on github',
       status: 'Ongoing',
+    ),
+    Task(
+      title: 'Submit Web Project 1',
+      description:
+          'Complete the code and publish on github',
+      status: 'Completed',
     ),
   ];
 
