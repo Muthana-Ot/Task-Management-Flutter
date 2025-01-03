@@ -3,6 +3,8 @@ import 'package:taskmanagementproject/model/Task.dart';
 import 'package:taskmanagementproject/widgets/TabItemWidget.dart';
 import 'package:taskmanagementproject/widgets/TasksListWidget.dart';
 import 'package:taskmanagementproject/widgets/TextBoxWidget.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert' as convert;
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -12,105 +14,147 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-final List<Task> tasks = [
-    Task(
-      title: 'Prepare Chess Club',
-      description:
-          'Get boards, organize the training room',
-      status: 'Ongoing',
-    ),
-    Task(
-      title: 'Social Media Posters',
-      description:
-          'Workshops Posters for 14/12/2024',
-      status: 'Completed',
-    ),
-    Task(
-      title: 'Submit Flutter Project 1',
-      description:
-          'Complete the code and publish on github',
-      status: 'Ongoing',
-    ),
-    Task(
-      title: 'Submit Web Project 1',
-      description:
-          'Complete the code and publish on github',
-      status: 'Completed',
-    ),
-  ];
+  final TextEditingController titleController = TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
+  final List<Task> tasks = [];
 
-  void updateTaskStatus(Task task, String newStatus) {
-    setState(() {
-      final index = tasks.indexOf(task);
-      if (index != -1) {
-        tasks[index] = Task(
-          title: task.title,
-          description: task.description,
-          status: newStatus,
-        );
-      }
-    });
+  @override
+  void initState() {
+    super.initState();
+    getTasks(); // Fetch tasks when the widget is initialized
   }
 
- void _AddTask() {
-    final TextEditingController titleController = TextEditingController();
-    final TextEditingController descriptionController = TextEditingController();
+   updateTaskStatus(Task task, String newStatus) async {
+    String server = "http://10.0.2.2:80/taskmanager/updateTasks.php";
+    Uri url = Uri.parse(server);
+
+    try {
+      var response = await http.put(url, body: {
+        "id": task.id.toString(),
+        "status": newStatus,
+      });
+
+      if (response.statusCode == 200) {
+        getTasks(); // Refresh tasks after status update
+      } else {
+        throw Exception("Failed to update task");
+      }
+    } catch (error) {
+      print("Error updating task status: $error");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to update task status")),
+      );
+    }
+  }
+
+    addTask() async {
+    String server = "http://10.0.2.2:80/taskmanager/addTasks.php";
+    Uri url = Uri.parse(server);
+
+    try {
+      var response = await http.post(url, body: {
+        "title": titleController.text,
+        "description": descriptionController.text,
+        "status": "Ongoing",
+      });
+
+      if (response.statusCode == 200) {
+        getTasks();
+      } else {
+        throw Exception("Failed to add task");
+      }
+    } catch (error) {
+      print("Error adding task: $error");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to add task")),
+      );
+    }
+  }
+
+    getTasks() async {
+    String serverPath = "http://10.0.2.2:80/taskmanager/getTasks.php";
+    Uri url = Uri.parse(serverPath);
+
+    try {
+      var response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          tasks.clear();
+          var retrievedData = convert.jsonDecode(response.body);
+          for (var retrievedTask in retrievedData) {
+            tasks.add(Task(
+              id: int.parse(retrievedTask["id"]) ,
+              title: retrievedTask["title"],
+              description: retrievedTask["description"],
+              status: retrievedTask["status"],
+            ));
+          }
+        });
+      } else {
+        throw Exception("Failed to fetch tasks");
+      }
+    } catch (error) {
+      print("Error fetching tasks: $error");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error fetching tasks: $error")),
+      );
+    }
+  }
+
+  void _showAddTaskModal() {
     showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Add New Task", style: TextStyle(color: Colors.black)),
-            content: Column(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Add New Task", style: TextStyle(color: Colors.black)),
+          content: SingleChildScrollView(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextBoxWidget(
-                    labelText: "Enter Task Title", controller: titleController),
-                SizedBox(
-                  height: 10,
+                  labelText: "Enter Task Title",
+                  controller: titleController,
                 ),
+                SizedBox(height: 10),
                 TextBoxWidget(
-                    labelText: "Enter Task Description",
-                    controller: descriptionController),
+                  labelText: "Enter Task Description",
+                  controller: descriptionController,
+                ),
               ],
             ),
-            actions: [
-              Center(
-                child: Row(
-                  children: [
-                    TextButton(
-                        onPressed: () => {Navigator.of(context).pop()},
-                        child: Text("Cancel")),
-                    ElevatedButton(
-                        onPressed: () {
-                          final String title = titleController.text.trim();
-                          final String description = descriptionController.text.trim();
-                          if(title.isNotEmpty && description.isNotEmpty){
-                            setState(() {                              
-                          tasks.add(
-                            Task(
-                            title: title, 
-                            description: description, 
-                            status: 'Ongoing')
-                             );                           
-                            }
-                           );
-                          }
-                            Navigator.of(context).pop();
-                      },
-                   child: Text("Add Task"))
-                  ],
+          ),
+          actions: [
+            Row(
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text("Cancel"),
                 ),
-              )
-            ],
-          );
-        }
-      );
-    }
+                ElevatedButton(
+                  onPressed: () {
+                    final String title = titleController.text.trim();
+                    final String description =
+                        descriptionController.text.trim();
 
+                    if (title.isNotEmpty && description.isNotEmpty) {
+                      addTask();
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  child: Text("Add Task"),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return   DefaultTabController(
+    return DefaultTabController(
       length: 2,
       child: Scaffold(
         backgroundColor: Colors.white,
@@ -123,7 +167,7 @@ final List<Task> tasks = [
             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
           ),
           leading: IconButton(
-            onPressed: _AddTask,
+            onPressed: _showAddTaskModal,
             icon: const Icon(Icons.add),
           ),
           bottom: PreferredSize(
@@ -140,7 +184,9 @@ final List<Task> tasks = [
                       padding: const EdgeInsets.all(6),
                       margin: const EdgeInsets.symmetric(horizontal: 15),
                       decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.all(Radius.circular(8)),
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(8),
+                        ),
                         color: Colors.grey[100],
                       ),
                       child: const TabBar(
@@ -148,7 +194,9 @@ final List<Task> tasks = [
                         dividerColor: Colors.transparent,
                         indicator: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(10),
+                          ),
                         ),
                         labelColor: Colors.black,
                         unselectedLabelColor: Colors.black45,
@@ -169,13 +217,15 @@ final List<Task> tasks = [
           children: [
             Center(
               child: TasksListWidget(
-                tasks: tasks.where((tasks) => tasks.status == 'Ongoing').toList(),
+                tasks:
+                    tasks.where((task) => task.status == 'Ongoing').toList(),
                 statusChange: updateTaskStatus,
               ),
             ),
             Center(
               child: TasksListWidget(
-                tasks: tasks.where((tasks) => tasks.status == 'Completed').toList(),
+                tasks:
+                    tasks.where((task) => task.status == 'Completed').toList(),
                 statusChange: updateTaskStatus,
               ),
             ),
