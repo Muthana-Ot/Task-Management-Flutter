@@ -5,7 +5,8 @@ class TasksListWidget extends StatefulWidget {
   final List<Task> tasks;
   final Function(Task, String) statusChange;
   final Function(Task) deleteTask;
-  const TasksListWidget({super.key, required this.tasks, required this.statusChange, required this.deleteTask});
+  final Function(Task, String, String) editTask;
+  const TasksListWidget({super.key, required this.tasks, required this.statusChange, required this.deleteTask, required this.editTask});
 
   @override
   State<TasksListWidget> createState() => _TasksListWidgetState();
@@ -55,6 +56,16 @@ class _TasksListWidgetState extends State<TasksListWidget> {
       icon: Icon(
         Icons.delete_forever, // Replace with the desired icon
         color: const Color.fromARGB(255, 181, 117, 113), // Choose the color you want for the second button
+      ),
+    ),
+    IconButton(
+      onPressed: () {
+        final title = 
+        widget.editTask(task, task.title, task.description);
+      },
+      icon: Icon(
+        Icons.edit, // Replace with the desired icon
+        color: Colors.grey, // Choose the color you want for the second button
       ),
     ),
   ],

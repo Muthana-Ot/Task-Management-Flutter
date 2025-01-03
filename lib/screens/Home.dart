@@ -16,6 +16,8 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController edittitleController = TextEditingController();
+  final TextEditingController editdescriptionController = TextEditingController();
   final List<Task> tasks = [];
 
   @override
@@ -24,48 +26,51 @@ class _HomeState extends State<Home> {
     getTasks(); // Fetch tasks when the widget is initialized
   }
 
-   updateTaskStatus(Task task, String newStatus) async {
-    String server = "http://10.0.2.2:80/taskmanager/updateTasks.php";
-    Uri url = Uri.parse(server);
-
+  void updateTaskStatus(Task task, String newStatus) async {
+    print("Task ID: ${task.id}, New Status: $newStatus");
+    String serverPath =
+        "http://10.0.2.2:80/taskmanager/updateTasks.php";
+    Uri url = Uri.parse(serverPath);
     try {
-      var response = await http.put(url, body: {
-        "id": task.id.toString(),
-        "status": newStatus,
-      });
-
-      if (response.statusCode == 200) {
-        getTasks(); // Refresh tasks after status update
-      } else {
-        throw Exception("Failed to update task");
-      }
-    } catch (error) {
-      print("Error updating task status: $error");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to update task status")),
+      var response = await http.post(
+        url,
+        body: {"id": task.id.toString(), "status": newStatus},
       );
+      await getTasks();
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  void editTask(Task task, String title, String description) async {
+    print("Task ID: ${task.id}, Title: ${title}, Description: ${description}");
+    String serverPath =
+        "http://10.0.2.2:80/taskmanager/editTasks.php";
+    Uri url = Uri.parse(serverPath);
+    try {
+      var response = await http.post(
+        url,
+        body: {"id": task.id.toString(), "title": title, "description": description},
+      );
+      await getTasks();
+    } catch (e) {
+      print("Error: $e");
     }
   }
 
    deleteTask(Task task) async {
-    String server = "http://10.0.2.2:80/taskmanager/deleteTasks.php";
-    Uri url = Uri.parse(server);
-
+     print("Task ID: ${task.id}");
+    String serverPath =
+        "http://10.0.2.2:80/taskmanager/deleteTasks.php";
+    Uri url = Uri.parse(serverPath);
     try {
-      var response = await http.put(url, body: {
-        "id": task.id.toString(),
-      });
-
-      if (response.statusCode == 200) {
-        getTasks(); // Refresh tasks after status update
-      } else {
-        throw Exception("Failed to delete task");
-      }
-    } catch (error) {
-      print("Error deleting task status: $error");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed in deleting")),
+      var response = await http.post(
+        url,
+        body: {"id": task.id.toString()},
       );
+      await getTasks();
+    } catch (e) {
+      print("Error: $e");
     }
   }
 
@@ -150,7 +155,11 @@ class _HomeState extends State<Home> {
             Row(
               children: [
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () {
+                    titleController.clear();
+                    descriptionController.clear();
+                    Navigator.of(context).pop();                 
+                  },
                   child: Text("Cancel"),
                 ),
                 ElevatedButton(
@@ -161,10 +170,69 @@ class _HomeState extends State<Home> {
 
                     if (title.isNotEmpty && description.isNotEmpty) {
                       addTask();
+                      titleController.clear();
+                      descriptionController.clear();
                       Navigator.of(context).pop();
                     }
                   },
                   child: Text("Add Task"),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showEditTaskModal(Task task, String title, String description) {
+    edittitleController.text = title;
+    editdescriptionController.text = description;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Edit Your Task", style: TextStyle(color: Colors.black)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextBoxWidget(
+                  labelText: "Edit Task Title",
+                  controller: edittitleController,
+                ),
+                SizedBox(height: 10),
+                TextBoxWidget(
+                  labelText: "Edit Task Description",
+                  controller: editdescriptionController,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            Row(
+              children: [
+                TextButton(
+                  onPressed: () {
+                    edittitleController.clear();
+                    editdescriptionController.clear();
+                    Navigator.of(context).pop();                 
+                  },
+                  child: Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final String editedTitle = edittitleController.text.trim();
+                    final String editedDescription = editdescriptionController.text.trim();
+
+                    if (editedTitle.isNotEmpty && editedDescription.isNotEmpty) {
+                      editTask(task, editedTitle, editedDescription);
+                      titleController.clear();
+                      descriptionController.clear();
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  child: Text("Edit Task"),
                 ),
               ],
             ),
@@ -243,6 +311,7 @@ class _HomeState extends State<Home> {
                     tasks.where((task) => task.status == 'Ongoing').toList(),
                 statusChange: updateTaskStatus,
                 deleteTask: deleteTask,
+                editTask: _showEditTaskModal,
               ),
             ),
             Center(
@@ -251,6 +320,7 @@ class _HomeState extends State<Home> {
                     tasks.where((task) => task.status == 'Completed').toList(),
                 statusChange: updateTaskStatus,
                 deleteTask: deleteTask,
+                editTask: _showEditTaskModal,
               ),
             ),
           ],
