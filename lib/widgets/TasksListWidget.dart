@@ -4,7 +4,8 @@ import 'package:taskmanagementproject/model/Task.dart';
 class TasksListWidget extends StatefulWidget {
   final List<Task> tasks;
   final Function(Task, String) statusChange;
-  const TasksListWidget({super.key, required this.tasks, required this.statusChange});
+  final Function(Task) deleteTask;
+  const TasksListWidget({super.key, required this.tasks, required this.statusChange, required this.deleteTask});
 
   @override
   State<TasksListWidget> createState() => _TasksListWidgetState();
@@ -33,15 +34,32 @@ class _TasksListWidgetState extends State<TasksListWidget> {
             style: TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(task.description),
-            trailing: IconButton(
-              onPressed: (){
-                final newStatus =
-                task.status == 'Ongoing' ? 'Completed' : 'Ongoing';
-                widget.statusChange(task, newStatus);
-              }, 
-              icon: Icon(Icons.playlist_add_check_circle_sharp,
-              color: task.status == 'Ongoing' ? Colors.grey : Colors.green.shade500,)
-              ),
+           trailing: Row(
+  mainAxisSize: MainAxisSize.min,
+  children: [
+    IconButton(
+      onPressed: () {
+        final newStatus =
+            task.status == 'Ongoing' ? 'Completed' : 'Ongoing';
+        widget.statusChange(task, newStatus);
+      },
+      icon: Icon(
+        Icons.playlist_add_check_circle_sharp,
+        color: task.status == 'Ongoing' ? Colors.grey : Colors.green.shade500,
+      ),
+    ),
+    IconButton(
+      onPressed: () {
+        widget.deleteTask(task);
+      },
+      icon: Icon(
+        Icons.delete_forever, // Replace with the desired icon
+        color: const Color.fromARGB(255, 181, 117, 113), // Choose the color you want for the second button
+      ),
+    ),
+  ],
+),
+
           ),
 
          );

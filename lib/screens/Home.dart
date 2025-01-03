@@ -47,6 +47,28 @@ class _HomeState extends State<Home> {
     }
   }
 
+   deleteTask(Task task) async {
+    String server = "http://10.0.2.2:80/taskmanager/deleteTasks.php";
+    Uri url = Uri.parse(server);
+
+    try {
+      var response = await http.put(url, body: {
+        "id": task.id.toString(),
+      });
+
+      if (response.statusCode == 200) {
+        getTasks(); // Refresh tasks after status update
+      } else {
+        throw Exception("Failed to delete task");
+      }
+    } catch (error) {
+      print("Error deleting task status: $error");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed in deleting")),
+      );
+    }
+  }
+
     addTask() async {
     String server = "http://10.0.2.2:80/taskmanager/addTasks.php";
     Uri url = Uri.parse(server);
@@ -220,6 +242,7 @@ class _HomeState extends State<Home> {
                 tasks:
                     tasks.where((task) => task.status == 'Ongoing').toList(),
                 statusChange: updateTaskStatus,
+                deleteTask: deleteTask,
               ),
             ),
             Center(
@@ -227,6 +250,7 @@ class _HomeState extends State<Home> {
                 tasks:
                     tasks.where((task) => task.status == 'Completed').toList(),
                 statusChange: updateTaskStatus,
+                deleteTask: deleteTask,
               ),
             ),
           ],
