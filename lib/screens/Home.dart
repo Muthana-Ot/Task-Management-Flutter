@@ -29,7 +29,7 @@ class _HomeState extends State<Home> {
   void updateTaskStatus(Task task, String newStatus) async {
     print("Task ID: ${task.id}, New Status: $newStatus");
     String serverPath =
-        "http://10.0.2.2:80/taskmanager/updateTasks.php";
+        "http://muthana.atwebpages.com/updateTasks.php";
     Uri url = Uri.parse(serverPath);
     try {
       var response = await http.post(
@@ -45,7 +45,7 @@ class _HomeState extends State<Home> {
   void editTask(Task task, String title, String description) async {
     print("Task ID: ${task.id}, Title: ${title}, Description: ${description}");
     String serverPath =
-        "http://10.0.2.2:80/taskmanager/editTasks.php";
+        "http://muthana.atwebpages.com/editTasks.php";
     Uri url = Uri.parse(serverPath);
     try {
       var response = await http.post(
@@ -61,7 +61,7 @@ class _HomeState extends State<Home> {
    deleteTask(Task task) async {
      print("Task ID: ${task.id}");
     String serverPath =
-        "http://10.0.2.2:80/taskmanager/deleteTasks.php";
+        "http://muthana.atwebpages.com/deleteTasks.php";
     Uri url = Uri.parse(serverPath);
     try {
       var response = await http.post(
@@ -75,7 +75,7 @@ class _HomeState extends State<Home> {
   }
 
     addTask() async {
-    String server = "http://10.0.2.2:80/taskmanager/addTasks.php";
+    String server = "http://muthana.atwebpages.com/addTasks.php";
     Uri url = Uri.parse(server);
 
     try {
@@ -99,7 +99,7 @@ class _HomeState extends State<Home> {
   }
 
     getTasks() async {
-    String serverPath = "http://10.0.2.2:80/taskmanager/getTasks.php";
+    String serverPath = "http://muthana.atwebpages.com/getTasks.php";
     Uri url = Uri.parse(serverPath);
 
     try {
